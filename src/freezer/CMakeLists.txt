@@ -1,6 +1,8 @@
 if (${freezer_enable_tests})
   add_executable(freezer_test
       ${src}/freezer/test.cc
+      ${src}/freezer/freezer.cc
+      ${src}/freezer/freezer.h
   )
   add_dependencies(freezer_test
     external_rtff
