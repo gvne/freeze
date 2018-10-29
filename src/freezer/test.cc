@@ -106,7 +106,7 @@ TEST(Freezer, basic) {
 
   FreezerFilter filter;
   std::error_code err;
-  filter.Init(channel_number, 512, 256, err);
+  filter.Init(channel_number, 2048, 1024, err);
   ASSERT_FALSE(err);
   filter.set_block_size(block_size);
 
