@@ -36,11 +36,43 @@ class FreezerFilter : public rtff::AbstractFilter {
     is_on_ = value;
     just_on_ = true;
   }
+  
   bool is_on() const { return is_on_; }
+  
+  void ProcessBlock(rtff::AudioBuffer* buffer) override {
+    // copy data to temp buffer
+    for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
+      std::copy(buffer->data(channel_idx),
+                buffer->data(channel_idx) + buffer->frame_count(),
+                processing_buffer_->data(channel_idx));
+    }
+    
+    // process temp buffer
+    rtff::AbstractFilter::ProcessBlock(processing_buffer_.get());
+    
+    // add the buffer output to original buffer
+    for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
+      Eigen::Map<Eigen::VectorXf> processed_data(
+          processing_buffer_->data(channel_idx),
+          processing_buffer_->frame_count());
+      Eigen::Map<Eigen::VectorXf> original_data(
+          buffer->data(channel_idx),
+          buffer->frame_count());
+      original_data += processed_data;
+    }
+  }
+  
+  uint32_t FrameLatency() const override {
+    return 0;
+  }
 
  private:
-  void PrepareToPlay(std::error_code& err) override {
-    rtff::AbstractFilter::PrepareToPlay(err);
+  void PrepareToPlay() override {
+    rtff::AbstractFilter::PrepareToPlay();
+    // Initialize processing buffer
+    processing_buffer_ =
+        std::make_shared<rtff::AudioBuffer>(block_size(), channel_count());
+
     // Initialize storage to avoid allocating memory at runtime
     auto trame_size = window_size() / 2 + 1;
     auto multichannel_trame_size = trame_size * channel_count();
@@ -55,10 +87,11 @@ class FreezerFilter : public rtff::AbstractFilter {
 
   void ProcessTransformedBlock(std::vector<std::complex<float>*> data,
                                uint32_t size) override {
-    // Fill data into the fourier transform
+    // Fill data into the fourier transform and set it to zeros
     for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
       Eigen::Map<Eigen::VectorXcf> channel_data(data[channel_idx], size);
       fourier_transform_.segment(channel_idx * size, size) = channel_data;
+      channel_data.noalias() = Eigen::VectorXcf::Zero(size);
     }
 
     if (just_on_) {
@@ -78,16 +111,17 @@ class FreezerFilter : public rtff::AbstractFilter {
       auto expr = freeze_ft_magnitude_.array() *
                   total_dphi_.unaryExpr<ToComplexImgOperation>().array().exp();
 
-      // add it to the input data
+      // set it to the input data
       for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
         Eigen::Map<Eigen::VectorXcf> channel_data(data[channel_idx], size);
-        channel_data.array() += expr.segment(channel_idx * size, size);
+        channel_data.array() = expr.segment(channel_idx * size, size);
       }
     }
 
     previous_fourier_transform_.noalias() = fourier_transform_;
   }
 
+  std::shared_ptr<rtff::AudioBuffer> processing_buffer_;
   Eigen::VectorXcf fourier_transform_, previous_fourier_transform_;
   bool is_on_, just_on_;
   Eigen::VectorXf dphi_, total_dphi_, freeze_ft_magnitude_;
@@ -128,30 +162,18 @@ TEST(Freezer, basic) {
     filter.ProcessBlock(&buffer);
     buffer.toInterleaved(sample_ptr);
 
-    // enable after 1.2 sec
-    if (!filter.is_on() && sample_idx >= 1.2 * file.sample_rate() * file.channel_number()) {
+    // enable after 1 sec
+    if (!filter.is_on() && sample_idx >= 1 * file.sample_rate() * file.channel_number()) {
       filter.set_is_on(true);
     }
-
-    // to write, we compensate the latency
-    int output_sample_idx =
-    sample_idx - (filter.FrameLatency() * channel_number);
-    if (output_sample_idx < 0) {
-      // begining of the file. As we create latency, the first few samples will
-      // be zeros. To compensate, we just remove them
-      float* output_sample_ptr = content.data();
-      float* processed_sample_ptr = sample_ptr + abs(output_sample_idx);
-      auto size_to_copy = block_size - filter.FrameLatency();
-      memcpy(output_sample_ptr, processed_sample_ptr,
-             size_to_copy * channel_number * sizeof(float));
-    } else {
-      // after the first few buffers, we are on general case. We just have the
-      // write taking the latency into consideration
-      float* output_sample_ptr = content.data() + output_sample_idx;
-      memcpy(output_sample_ptr, sample_ptr,
-             block_size * channel_number * sizeof(float));
+    // disable after 4 sec
+    if (filter.is_on() && sample_idx >= 4 * file.sample_rate() * file.channel_number()) {
+      filter.set_is_on(false);
     }
 
+    memcpy(content.data() + sample_idx, sample_ptr,
+           block_size * channel_number * sizeof(float));
+    
     // display the current status
     std::cout << round(double(sample_idx * 100) /
                        (file.frame_number() * file.channel_number()))
