@@ -1,12 +1,21 @@
 #include "freezer/freezer.h"
 
+#include <Eigen/Core>
+
 #include "freezer/operation.h"
+
+class Freezer::Impl {
+ public:
+  Eigen::VectorXcf fourier_transform, previous_fourier_transform;
+  Eigen::VectorXf dphi, total_dphi, freeze_ft_magnitude;
+};
 
 Freezer::Freezer()
     : rtff::AbstractFilter(),
       processing_buffer_(nullptr),
       is_on_(false),
-      just_on_(false) {}
+      just_on_(false),
+      impl_(std::make_shared<Impl>()) {}
 
 void Freezer::set_is_on(bool value) {
   is_on_ = value;
@@ -50,11 +59,11 @@ void Freezer::PrepareToPlay() {
   auto multichannel_trame_size = trame_size * channel_count();
 
   // members
-  fourier_transform_ = Eigen::VectorXcf::Zero(multichannel_trame_size);
-  previous_fourier_transform_.noalias() = fourier_transform_;
-  dphi_ = Eigen::VectorXf::Zero(multichannel_trame_size);
-  total_dphi_ = Eigen::VectorXf::Zero(multichannel_trame_size);
-  freeze_ft_magnitude_ = Eigen::VectorXf::Zero(multichannel_trame_size);
+  impl_->fourier_transform = Eigen::VectorXcf::Zero(multichannel_trame_size);
+  impl_->previous_fourier_transform.noalias() = impl_->fourier_transform;
+  impl_->dphi = Eigen::VectorXf::Zero(multichannel_trame_size);
+  impl_->total_dphi = Eigen::VectorXf::Zero(multichannel_trame_size);
+  impl_->freeze_ft_magnitude = Eigen::VectorXf::Zero(multichannel_trame_size);
 }
 
 void Freezer::ProcessTransformedBlock(std::vector<std::complex<float>*> data,
@@ -62,26 +71,30 @@ void Freezer::ProcessTransformedBlock(std::vector<std::complex<float>*> data,
   // Fill data into the fourier transform and set it to zeros
   for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
     Eigen::Map<Eigen::VectorXcf> channel_data(data[channel_idx], size);
-    fourier_transform_.segment(channel_idx * size, size) = channel_data;
+    impl_->fourier_transform.segment(channel_idx * size, size) = channel_data;
     channel_data.noalias() = Eigen::VectorXcf::Zero(size);
   }
 
   if (just_on_) {
-    freeze_ft_magnitude_.noalias() = fourier_transform_.cwiseAbs();
-    total_dphi_.noalias() = fourier_transform_.unaryExpr<ArgOperation>();
-    auto previous_angle = previous_fourier_transform_.unaryExpr<ArgOperation>();
-    dphi_.noalias() = total_dphi_ - previous_angle;
+    impl_->freeze_ft_magnitude.noalias() = impl_->fourier_transform.cwiseAbs();
+    impl_->total_dphi.noalias() =
+        impl_->fourier_transform.unaryExpr<ArgOperation>();
+    auto previous_angle =
+        impl_->previous_fourier_transform.unaryExpr<ArgOperation>();
+    impl_->dphi.noalias() = impl_->total_dphi - previous_angle;
     just_on_ = false;
   }
 
   if (is_on()) {
-    total_dphi_ += dphi_;
-    total_dphi_.noalias() = total_dphi_.unaryExpr<Modulo2PIOperation>();
+    impl_->total_dphi += impl_->dphi;
+    impl_->total_dphi.noalias() =
+        impl_->total_dphi.unaryExpr<Modulo2PIOperation>();
 
     // in python: self.freeze_ft_magnitude * np.exp(1j * self.total_dphi)
     // 1j * self.total_dphi => convert total_dphi imaginary part of a complex
-    auto expr = freeze_ft_magnitude_.array() *
-                total_dphi_.unaryExpr<ToComplexImgOperation>().array().exp();
+    auto expr =
+        impl_->freeze_ft_magnitude.array() *
+        impl_->total_dphi.unaryExpr<ToComplexImgOperation>().array().exp();
 
     // set it to the input data
     for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
@@ -90,5 +103,5 @@ void Freezer::ProcessTransformedBlock(std::vector<std::complex<float>*> data,
     }
   }
 
-  previous_fourier_transform_.noalias() = fourier_transform_;
+  impl_->previous_fourier_transform.noalias() = impl_->fourier_transform;
 }
