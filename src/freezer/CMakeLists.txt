@@ -18,6 +18,7 @@ target_link_libraries(freezer
   optimized rtff
   debug rtffd
   fftw3f
+  pthread
 )
 
 # Unit testing
@@ -48,6 +49,7 @@ if (${freezer_enable_tests})
     fftw3f
     debug waved
     optimized wave
+    pthread
   )
   target_compile_definitions(freezer_test
     PUBLIC
