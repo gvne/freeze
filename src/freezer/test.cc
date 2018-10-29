@@ -113,7 +113,7 @@ TEST(Freezer, basic) {
   rtff::AudioBuffer buffer(block_size, channel_number);
 
   // For debug. From this point, the application shouldn't allocate any memory.
-//  Eigen::internal::set_is_malloc_allowed(false);
+  Eigen::internal::set_is_malloc_allowed(false);
 
   // Extract each frames (add latency)
   auto multichannel_buffer_size = block_size * channel_number;
@@ -159,7 +159,7 @@ TEST(Freezer, basic) {
   }
 
   // For debug. From this point, the application can allocate memory
-//  Eigen::internal::set_is_malloc_allowed(true);
+  Eigen::internal::set_is_malloc_allowed(true);
 
   // Write the output file content
   wave::File output;

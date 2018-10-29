@@ -31,6 +31,7 @@ ExternalProject_Add(external_eigen
   INSTALL_COMMAND ""
 )
 set(eigen_include_dir ${eigen_install_dir})
+add_definitions("-DEIGEN_RUNTIME_NO_MALLOC")
 
 # tests
 if (${freezer_enable_tests})
