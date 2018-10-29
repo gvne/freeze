@@ -1,13 +1,32 @@
+add_library(freezer
+  ${src}/freezer/freezer.cc
+  ${src}/freezer/freezer.h
+  ${src}/freezer/operation.h
+  ${src}/freezer/operation.cc
+)
+add_dependencies(freezer
+  external_rtff
+  external_eigen
+)
+target_include_directories(freezer
+  PUBLIC
+    ${rtff_install_dir}/include
+  PRIVATE
+    ${eigen_install_dir}
+)
+target_link_libraries(freezer
+  optimized rtff
+  debug rtffd
+  fftw3f
+)
+
+# Unit testing
 if (${freezer_enable_tests})
   add_executable(freezer_test
-      ${src}/freezer/test.cc
-      ${src}/freezer/freezer.cc
-      ${src}/freezer/freezer.h
-      ${src}/freezer/operation.h
-      ${src}/freezer/operation.cc
+    ${src}/freezer/test.cc
   )
+  target_link_libraries(freezer_test freezer)
   add_dependencies(freezer_test
-    external_rtff
     external_googletest
     external_wave
     external_eigen
