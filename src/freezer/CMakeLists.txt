@@ -3,6 +3,8 @@ if (${freezer_enable_tests})
       ${src}/freezer/test.cc
       ${src}/freezer/freezer.cc
       ${src}/freezer/freezer.h
+      ${src}/freezer/operation.h
+      ${src}/freezer/operation.cc
   )
   add_dependencies(freezer_test
     external_rtff

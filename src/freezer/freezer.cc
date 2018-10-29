@@ -1,11 +1,18 @@
 #include "freezer/freezer.h"
 
-Freezer::Freezer() : rtff::AbstractFilter(), is_on_(false), just_on_(false) {}
+#include "freezer/operation.h"
+
+Freezer::Freezer()
+    : rtff::AbstractFilter(),
+      processing_buffer_(nullptr),
+      is_on_(false),
+      just_on_(false) {}
 
 void Freezer::set_is_on(bool value) {
   is_on_ = value;
   just_on_ = true;
 }
+
 bool Freezer::is_on() const { return is_on_; }
 
 void Freezer::ProcessBlock(rtff::AudioBuffer* buffer) {
