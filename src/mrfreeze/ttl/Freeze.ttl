@@ -1,0 +1,121 @@
+@prefix bsize:  <http://lv2plug.in/ns/ext/buf-size#>.
+@prefix doap:   <http://usefulinc.com/ns/doap#>.
+@prefix epp:    <http://lv2plug.in/ns/ext/port-props/#>.
+@prefix foaf:   <http://xmlns.com/foaf/0.1/>.
+@prefix lv2:    <http://lv2plug.in/ns/lv2core#>.
+@prefix mod:    <http://moddevices.com/ns/mod#>.
+@prefix modgui: <http://moddevices.com/ns/modgui#>.
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix units:  <http://lv2plug.in/ns/extensions/units#>.
+
+<http://romain-hennequin.fr/plugins/mod-devel/Freeze>
+a lv2:Plugin, lv2:SpectralPlugin;
+
+lv2:requiredFeature bsize:fixedBlockLength, bsize:powerOf2BlockLength;
+
+doap:name "Mr. Freeze";
+
+doap:developer [
+    foaf:name "bx5a,romi1502";
+    foaf:homepage <http://romain-hennequin.fr>;
+    foaf:mbox <mailto:>;
+];
+
+doap:maintainer [
+    foaf:name "bx5a,romi1502";
+    foaf:homepage <http://romain-hennequin.fr>;
+    foaf:mbox <mailto:>;
+];
+
+mod:brand "ForTheMod";
+mod:label "Mr. Freeze";
+
+
+doap:license "GPL";
+
+lv2:minorVersion 0;
+lv2:microVersion 1;
+
+rdfs:comment """
+MrFreeze is an audio effect that provides an infinite sustain pedal for any tonal sound in a way similar as the Electro Harmonix Freeze pedal(*).
+
+* The "Freeze" Toggle activate the sustain.
+* "Freeze Gain" and "Dry Gain" are self explanatory.
+* "Fade In" corresponds to the speed with which the sustained sound appears.
+
+(*) 'Other product names modeled in this software are trademarks of their respective companies that do not endorse and are not associated or affiliated with the MrFreeze Developers.
+Electro Harmonix Freeze is a trademark or trade name of another manufacturer and was used merely to identify the product whose sound was reviewed in the creation of this product.
+""";
+
+lv2:port
+[
+    a lv2:AudioPort, lv2:InputPort;
+    lv2:index 0;
+    lv2:symbol "In";
+    lv2:name "In";
+    lv2:shortName "In";
+],
+[
+    a lv2:AudioPort, lv2:OutputPort;
+    lv2:index 1;
+    lv2:symbol "Out";
+    lv2:name "Out";
+    lv2:shortName "Out";
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 2;
+    lv2:symbol "Freeze";
+    lv2:name "Freeze";
+    lv2:shortName "Freeze";
+    lv2:portProperty lv2:toggled, lv2:integer;
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 3;
+    lv2:symbol "FreezeGain";
+    lv2:name "Freeze Gain";
+    lv2:shortName "Freeze Gain";
+    lv2:default 0.0;
+    lv2:minimum -48.0;
+    lv2:maximum 6.0;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 4;
+    lv2:symbol "DryGain";
+    lv2:name "Dry Gain";
+    lv2:shortName "Dry Gain";
+    lv2:default 0.0;
+    lv2:minimum -48.0;
+    lv2:maximum 6.0;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 5;
+    lv2:symbol "FadeIn";
+    lv2:name "Fade In";
+    lv2:shortName "Fade In";
+    lv2:default 0.5;
+    lv2:minimum 0.1;
+    lv2:maximum 5;
+    units:unit units:s;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 6;
+    lv2:symbol "FadeOut";
+    lv2:name "Fade Out";
+    lv2:shortName "Fade Out";
+    lv2:default 3.0;
+    lv2:minimum 0.1;
+    lv2:maximum 10;
+    units:unit units:s;
+]
+.

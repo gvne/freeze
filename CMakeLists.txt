@@ -4,6 +4,7 @@ include(ExternalProject)
 project(freezer CXX)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-fPIC")
 
 option(freezer_enable_tests "Build Unit tests" ON)
 
@@ -11,10 +12,13 @@ option(freezer_enable_tests "Build Unit tests" ON)
 set(rtff_install_dir ${CMAKE_BINARY_DIR}/rtff-install)
 ExternalProject_Add(external_rtff
   GIT_REPOSITORY "https://github.com/audionamix/rtff"
-  GIT_TAG "709708f1be32f8f0f19a8feb401a3b60a25c0141"
+  GIT_TAG "a718625a6b243b5831752fdcb2ca80a650d84716"
   CMAKE_ARGS
+    "-Drtff_enable_tests=OFF"  # disable tests
     "-Drtff_use_mkl=OFF"  # force the use of fftw
     "-DCMAKE_INSTALL_PREFIX=${rtff_install_dir}"
+    "-DCMAKE_CXX_FLAGS=-fPIC"
+    "-DCMAKE_C_FLAGS=-fPIC"
 )
 link_directories(${rtff_install_dir}/lib)
 
