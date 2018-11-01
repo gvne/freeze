@@ -86,10 +86,10 @@ void Plugin::connect_port(LV2_Handle instance, uint32_t port, void* data) {
 void Plugin::UpdateBuffers(uint32_t block_size) {
   // TODO: initialize the block size at instanciation to avoid allocating
   // memory at runtime
-  if (filter->block_size() != n_samples) {
-    filter->set_block_size(n_samples);
+  if (filter->block_size() != block_size) {
+    filter->set_block_size(block_size);
   }
-  if (!buffer || buffer->frame_count() != n_samples) {
+  if (!buffer || buffer->frame_count() != block_size) {
     buffer = std::make_shared<rtff::AudioBuffer>(block_size, channel_count());
   }
 }
@@ -118,14 +118,14 @@ void Plugin::ProcessBlock(uint32_t block_size) {
 
   // copy input in buffer
   auto in = ports[IN];
-  std::copy(in, in + n_samples, buffer_ptr);
+  std::copy(in, in + block_size, buffer_ptr);
 
   // process buffer
   filter->ProcessBlock(buffer.get());
 
   // copy buffer to output
   auto out = ports[OUT];
-  std::copy(buffer_ptr, buffer_ptr + n_samples, out);
+  std::copy(buffer_ptr, buffer_ptr + block_size, out);
 }
 
 void Plugin::run(LV2_Handle instance, uint32_t n_samples) {
@@ -133,7 +133,7 @@ void Plugin::run(LV2_Handle instance, uint32_t n_samples) {
 
   plugin->UpdateBuffers(n_samples);
   plugin->UpdateParameters();
-  plugin->ProcesBlock(n_samples);
+  plugin->ProcessBlock(n_samples);
 }
 
 /**********************************************************************************************************************************************************/
