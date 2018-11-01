@@ -7,7 +7,7 @@ A realtime audio filter based on
 ```bash
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/lib/lv2/ ..
 make
 ```
 
@@ -16,4 +16,13 @@ we provide a docker container:
 ```bash
 docker build -t freezer .
 docker run -it --rm -v$(pwd):/code freezer bash
+```
+
+## Execute
+
+To test the execution, we use the `lv2file` project
+```bash
+sudo apt-get install lv2file
+lv2file -l  # list available plugins
+lv2file -m -i untitled.wav -o output.wav http://romain-hennequin.fr/plugins/mod-devel/Freeze
 ```

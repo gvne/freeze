@@ -1,13 +1,10 @@
-#include <stdlib.h>
-#include <stdint.h>
-#include <cmath>
-
+#include <cstdlib>
 #include <iostream>
-#include <queue>
 
 #include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 
 #include "freezer/freezer.h"
+#include "rtff/buffer/audio_buffer.h"
 
 /**********************************************************************************************************************************************************/
 
@@ -16,41 +13,16 @@ enum { IN, OUT, FREEZE, FREEZEGAIN, DRYGAIN, FADEINDURATION, FADEOUTDURATION, PL
 
 /**********************************************************************************************************************************************************/
 
-class Freeze {
+class Plugin {
  public:
-  Freeze(/*uint32_t n_samples, int nBuffers, double samplerate*/) : filter(std::make_shared<Freezer>()) {
-    // Construct(n_samples, nBuffers, samplerate, wfile.c_str());
+  Plugin() : filter(std::make_shared<Freezer>()) {
+    std::error_code err;
+    filter->Init(channel_count(), err);
+    // TODO: check for error...
   }
-
-  // ~Freeze() { Destruct(); }
-
-  // void Construct(uint32_t n_samples, int nBuffers, double samplerate,
-  //                const std::string& wisdomFile) {
-  //   this->nBuffers = nBuffers;
-  //   SampleRate = samplerate;
-  //
-  //   //freezer = new freeze::Freezer();
-  //   int n_FFT = 1024;
-  //   //freezer->Init(1, wisdomFile, n_FFT);
-  //
-  //   const size_t kBufferLen = n_FFT/2;
-  //   temp_buffer.resize(kBufferLen);
-  //
-  //   dry_gain = 1;
-  //   freeze_envelope_gain = 0.;
-  //   time_since_last_freeze = -1.;
-  //   fade_in = false;
-  //   fade_out = false;
-  //
-  //   cont = 0;
-  // }
-  // void Destruct() {
-  //   // delete freezer;
-  // }
-  // void Realloc(uint32_t n_samples, int nBuffers) {
-  //   Destruct();
-  //   Construct(n_samples, nBuffers, SampleRate, wisdomFile);
-  // }
+  std::shared_ptr<Freezer> filter;
+  std::shared_ptr<rtff::AudioBuffer> buffer;
+  uint8_t channel_count() const { return 1; }  // only runs in mono
 
   static LV2_Handle instantiate(const LV2_Descriptor* descriptor,
                                 double samplerate, const char* bundle_path,
@@ -63,29 +35,18 @@ class Freeze {
   static const void* extension_data(const char* uri);
   float* ports[PLUGIN_PORT_COUNT];
 
-  std::shared_ptr<Freezer> filter;
-
-  // // freeze::Freezer* freezer;
-  // std::queue<float> input_queue, output_queue;
-  // std::vector<float> temp_buffer;
-  // float dry_gain;
-  // float freeze_envelope_gain;
-  // float time_since_last_freeze;
-  // bool fade_in;
-  // bool fade_out;
-  //
-  // int nBuffers;
-  // int cont;
-  // double SampleRate;
-  // std::string wisdomFile;
+ private:
+  void UpdateParameters();
+  void UpdateBuffers(uint32_t block_size);
+  void ProcessBlock(uint32_t block_size);
 };
 
 /**********************************************************************************************************************************************************/
 
 static const LV2_Descriptor descriptor = {
-    PLUGIN_URI,       Freeze::instantiate,   Freeze::connect_port,
-    Freeze::activate, Freeze::run,           Freeze::deactivate,
-    Freeze::cleanup,  Freeze::extension_data};
+    PLUGIN_URI,       Plugin::instantiate,   Plugin::connect_port,
+    Plugin::activate, Plugin::run,           Plugin::deactivate,
+    Plugin::cleanup,  Plugin::extension_data};
 
 /**********************************************************************************************************************************************************/
 
@@ -99,152 +60,86 @@ const LV2_Descriptor* lv2_descriptor(uint32_t index) {
 
 /**********************************************************************************************************************************************************/
 
-LV2_Handle Freeze::instantiate(const LV2_Descriptor* descriptor,
+LV2_Handle Plugin::instantiate(const LV2_Descriptor* descriptor,
                                double samplerate, const char* bundle_path,
                                const LV2_Feature* const* features) {
-  // std::string wisdomFile = bundle_path;
-  // wisdomFile += "/mrfreeze.wisdom";
-  // const uint32_t n_samples = 128;  // GetBufferSize(features);
-  Freeze* plugin = new Freeze();
-  return (LV2_Handle)plugin;
+  return (LV2_Handle)new Plugin();
 }
 
 /**********************************************************************************************************************************************************/
 
-void Freeze::activate(LV2_Handle instance) {}
+void Plugin::activate(LV2_Handle instance) {}
 
 /**********************************************************************************************************************************************************/
 
-void Freeze::deactivate(LV2_Handle instance) {}
+void Plugin::deactivate(LV2_Handle instance) {}
 
 /**********************************************************************************************************************************************************/
 
-void Freeze::connect_port(LV2_Handle instance, uint32_t port, void* data) {
-  auto plugin = reinterpret_cast<Freeze*>(instance);
+void Plugin::connect_port(LV2_Handle instance, uint32_t port, void* data) {
+  auto plugin = reinterpret_cast<Plugin*>(instance);
   plugin->ports[port] = reinterpret_cast<float*>(data);
 }
 
 /**********************************************************************************************************************************************************/
 
-void Freeze::run(LV2_Handle instance, uint32_t n_samples) {
-    std::cout << n_samples << std::endl;
-  // Freeze* plugin;
-  // plugin = (Freeze*)instance;
+void Plugin::UpdateBuffers(uint32_t block_size) {
+  // TODO: initialize the block size at instanciation to avoid allocating
+  // memory at runtime
+  if (filter->block_size() != n_samples) {
+    filter->set_block_size(n_samples);
+  }
+  if (!buffer || buffer->frame_count() != n_samples) {
+    buffer = std::make_shared<rtff::AudioBuffer>(block_size, channel_count());
+  }
+}
+
+void Plugin::UpdateParameters() {
+  // set the ON / OFF state of the filter
+  bool enabled  = static_cast<int>(*(ports[FREEZE])+0.5f) == 1;
+  if (filter->is_on() != enabled) {
+    filter->set_is_on(enabled);
+  }
+
+  // TODO: deal with gain
+  // auto gain_db = static_cast<float>(*(plugin->ports[FREEZEGAIN]));
+  // auto gain = std::pow(10,gain_db/20.0);
   //
-  // float* in = plugin->ports[IN];
-  // float* out = plugin->ports[OUT];
-  // int freeze  = (int)(*(plugin->ports[FREEZE])+0.5f);
-  // float freeze_gain_db = (float)(*(plugin->ports[FREEZEGAIN]));
-  // float freeze_gain = std::pow(10,freeze_gain_db/20.0);
-  // float dry_gain_db = (float)(*(plugin->ports[DRYGAIN]));
-  //
+  // auto dry_gain_db = static_cast<float>(*(plugin->ports[DRYGAIN]));
+
+  // TODO:
   // float fade_in_duration = (float)(*(plugin->ports[FADEINDURATION]));
   // float fade_out_duration = (float)(*(plugin->ports[FADEOUTDURATION]));
-  //
-  // int c = 0;
-  // if (freeze==1) {
-  //     c = 1;
-  // }
-  //
-  // // enable / disable on TOGGLE CLEAN button
-  // bool enabled = c == 1;
-  // if (enabled && !plugin->freezer->IsEnabled()) {
-  //   plugin->freezer->Enable();
-  // }
-  // if (!enabled && plugin->freezer->IsEnabled()) {
-  //   plugin->freezer->Disable();
-  // }
-  //
-  // plugin->dry_gain = std::pow(10,dry_gain_db/20.0);
-  // if (dry_gain_db == -48)
-  //   plugin->dry_gain = 0;
-  //
-  // float freeze_target_gain;
-  // float min_gain = 0.001;
-  //
-  // if (plugin->freezer->IsEnabled()) {
-  //   freeze_target_gain = 1.;
-  //   if (plugin->freeze_envelope_gain < min_gain)
-  //     plugin->freeze_envelope_gain = min_gain;
-  //   plugin->fade_in = true;
-  //   plugin->fade_out = false;
-  //
-  // } else {
-  //   freeze_target_gain = min_gain;
-  //   plugin->fade_in = false;
-  //   plugin->fade_out = true;
-  //
-  // }
-  //
-  //
-  // // queue input data
-  // for (size_t sample_idx = 0; sample_idx < n_samples; sample_idx++) {
-  //   plugin->input_queue.push(in[sample_idx]);
-  // }
-  //
-  // // dequeue as much data as possible
-  // std::error_code err;
-  // while (plugin->input_queue.size() > plugin->temp_buffer.size()) {
-  //   // Get data from input queue
-  //   for (size_t sample_idx = 0; sample_idx < plugin->temp_buffer.size();
-  //        sample_idx++) {
-  //     plugin->temp_buffer[sample_idx] = plugin->input_queue.front();
-  //     plugin->input_queue.pop();
-  //   }
-  //
-  //   // write to freezer
-  //   plugin->freezer->Write(plugin->temp_buffer, err);
-  //   if (err) {
-  //     std::cout << "WARNING: Error while writing to freezer: " << err.message()
-  //               << std::endl;
-  //   }
-  //
-  //   // read from freezer
-  //   std::vector<float> result = plugin->freezer->Read(err);
-  //   if (err) {
-  //     std::cout << "WARNING: Error while reading from freezer: "
-  //               << err.message() << std::endl;
-  //   }
-  //
-  //
-  //   // Push data to output queue
-  //   float alpha_fade_in = std::pow(0.99/min_gain, 1./(fade_in_duration * plugin->SampleRate));
-  //   float alpha_fade_out = std::pow(0.99/min_gain, 1./(fade_out_duration * plugin->SampleRate));
-  //
-  //   for (size_t sample_idx = 0; sample_idx < result.size(); sample_idx++) {
-  //
-  //     if (plugin->fade_in & (plugin->freeze_envelope_gain<freeze_target_gain))
-  //       plugin->freeze_envelope_gain*=alpha_fade_in;
-  //
-  //     if (plugin->fade_out & (plugin->freeze_envelope_gain>freeze_target_gain))
-  //       plugin->freeze_envelope_gain/=alpha_fade_out;
-  //
-  //     if (plugin->fade_out & (plugin->freeze_envelope_gain<=min_gain))
-  //       plugin->freeze_envelope_gain = 0.;
-  //
-  //     plugin->output_queue.push(
-  //               plugin->freeze_envelope_gain * freeze_gain * result[sample_idx] +
-  //               plugin->dry_gain * plugin->temp_buffer[sample_idx]
-  //             );
-  //   }
-  // }
-  //
-  // // Fill output buffer
-  // for (size_t sample_idx = 0; sample_idx < n_samples; sample_idx++) {
-  //   // Zeros if we don't have enough data available
-  //   if (plugin->output_queue.empty()) {
-  //     out[sample_idx] = 0;
-  //     continue;
-  //   }
-  //   out[sample_idx] = plugin->output_queue.front();
-  //   plugin->output_queue.pop();
-  // }
+}
+
+void Plugin::ProcessBlock(uint32_t block_size) {
+  // Run the process
+  auto buffer_ptr = buffer->data(0);
+
+  // copy input in buffer
+  auto in = ports[IN];
+  std::copy(in, in + n_samples, buffer_ptr);
+
+  // process buffer
+  filter->ProcessBlock(buffer.get());
+
+  // copy buffer to output
+  auto out = ports[OUT];
+  std::copy(buffer_ptr, buffer_ptr + n_samples, out);
+}
+
+void Plugin::run(LV2_Handle instance, uint32_t n_samples) {
+  auto plugin = reinterpret_cast<Plugin*>(instance);
+
+  plugin->UpdateBuffers(n_samples);
+  plugin->UpdateParameters();
+  plugin->ProcesBlock(n_samples);
 }
 
 /**********************************************************************************************************************************************************/
 
-void Freeze::cleanup(LV2_Handle instance) { delete ((Freeze*)instance); }
+void Plugin::cleanup(LV2_Handle instance) { delete ((Plugin*)instance); }
 
 /**********************************************************************************************************************************************************/
 
-const void* Freeze::extension_data(const char* uri) { return NULL; }
+const void* Plugin::extension_data(const char* uri) { return NULL; }
