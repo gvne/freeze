@@ -1,5 +1,5 @@
 add_library(mrfreeze SHARED
-  ${src}/mrfreeze/main.cc
+  ${src}/plugin/main.cc
 )
 # remove the lib prefix
 set_target_properties(mrfreeze PROPERTIES PREFIX "")
@@ -28,7 +28,7 @@ install(TARGETS mrfreeze
 )
 
 # also install the content of the ttl folder
-set(ttl_folder ${src}/mrfreeze/ttl)
+set(ttl_folder ${src}/plugin/ttl)
 file(GLOB_RECURSE ttl_files RELATIVE ${ttl_folder} *.ttl *.html *.png *.css)
 set(ttl_files_paths "")
 foreach(test ${ttl_files})

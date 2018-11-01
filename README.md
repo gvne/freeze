@@ -1,5 +1,5 @@
 # Freezer
-A realtime audio filter based on
+A realtime audio filter and its lv2 plugin based on
 [Romi1502 freeze_audio](https://github.com/romi1502/freeze_audio).
 
 ## Build
