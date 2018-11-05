@@ -1,5 +1,6 @@
 add_library(mrfreeze SHARED
-  ${src}/plugin/main.cc
+  ${src}/plugin/plugin.cc
+  ${src}/plugin/plugin.h
 )
 # remove the lib prefix
 set_target_properties(mrfreeze PROPERTIES PREFIX "")
