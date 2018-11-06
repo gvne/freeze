@@ -12,10 +12,11 @@ option(freezer_enable_tests "Build Unit tests" ON)
 set(rtff_install_dir ${CMAKE_BINARY_DIR}/rtff-install)
 ExternalProject_Add(external_rtff
   GIT_REPOSITORY "https://github.com/audionamix/rtff"
-  GIT_TAG "a718625a6b243b5831752fdcb2ca80a650d84716"
+  GIT_TAG "2e6e3981e5589a56dc9b937eef1a2dc1f49e980e"
   CMAKE_ARGS
     "-Drtff_enable_tests=OFF"  # disable tests
     "-Drtff_use_mkl=OFF"  # force the use of fftw
+    "-Drtff_fftw_use_wisdom=ON"  # use the fftw wisdom file
     "-DCMAKE_INSTALL_PREFIX=${rtff_install_dir}"
     "-DCMAKE_CXX_FLAGS=-fPIC"
     "-DCMAKE_C_FLAGS=-fPIC"
