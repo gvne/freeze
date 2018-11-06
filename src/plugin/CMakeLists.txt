@@ -39,3 +39,15 @@ install(FILES
   ${ttl_files_paths}
   DESTINATION mrfreeze.lv2
 )
+
+# and the wisdom file
+set(wisdom_path "${CMAKE_BINARY_DIR}/rtff_2048.fftw")
+message(STATUS "Downloading precomputed wisdom file to ${wisdom_path}")
+file(DOWNLOAD
+  https://s3.amazonaws.com/gvne-public/code-requirements/mrfreeze/rtff_2048.fftw
+  ${wisdom_path}
+)
+install(FILES
+  ${wisdom_path}
+  DESTINATION mrfreeze.lv2
+)
