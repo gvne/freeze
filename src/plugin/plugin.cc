@@ -104,3 +104,7 @@ void Plugin::ProcessBlock(uint32_t block_size) {
   auto out = ports[OUT];
   std::copy(buffer_ptr, buffer_ptr + block_size, out);
 }
+
+uint8_t Plugin::channel_count() const {
+  return 1;
+}
