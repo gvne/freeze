@@ -1,5 +1,6 @@
 #include "plugin/plugin.h"
 
+#include <unistd.h>
 #include <cstdlib>
 #include <iostream>
 
@@ -30,6 +31,8 @@ const LV2_Descriptor* lv2_descriptor(uint32_t index) {
 LV2_Handle Plugin::instantiate(const LV2_Descriptor* descriptor,
                                double samplerate, const char* bundle_path,
                                const LV2_Feature* const* features) {
+  // move into the bundle so the filter init can find the wisdom file
+  chdir(bundle_path);
   return static_cast<LV2_Handle>(new Plugin());
 }
 
