@@ -25,6 +25,8 @@ TEST(Freezer, basic) {
   filter.Init(channel_number, 2048, 1024, err);
   ASSERT_FALSE(err);
   filter.set_block_size(block_size);
+  filter.set_gain(6.02);
+  filter.set_dry_gain(-6.02);
 
   rtff::AudioBuffer buffer(block_size, channel_number);
 
@@ -45,7 +47,7 @@ TEST(Freezer, basic) {
     if (filter.is_on() && sample_idx >= 4 * file.sample_rate() * file.channel_number()) {
       filter.set_is_on(false);
     }
-    
+
     // process the input buffer
     float* sample_ptr = content.data() + sample_idx;
 
@@ -55,7 +57,7 @@ TEST(Freezer, basic) {
 
     memcpy(content.data() + sample_idx, sample_ptr,
            block_size * channel_number * sizeof(float));
-    
+
     // display the current status
     std::cout << round(double(sample_idx * 100) /
                        (file.frame_number() * file.channel_number()))
@@ -67,7 +69,7 @@ TEST(Freezer, basic) {
 
   // Write the output file content
   wave::File output;
-  output.Open("/tmp/rtff_res.wav", wave::OpenMode::kOut);
+  output.Open("/tmp/freeze_res.wav", wave::OpenMode::kOut);
   output.set_sample_rate(file.sample_rate());
   output.set_channel_number(file.channel_number());
   output.set_bits_per_sample(file.bits_per_sample());

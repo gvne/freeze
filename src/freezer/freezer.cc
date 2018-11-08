@@ -15,6 +15,10 @@ Freezer::Freezer()
       processing_buffer_(nullptr),
       is_on_(false),
       just_on_(false),
+      gain_(1),
+      dry_gain_(1),
+      fade_in_duration_(0),
+      fade_out_duration_(0),
       impl_(std::make_shared<Impl>()) {}
 
 void Freezer::set_is_on(bool value) {
@@ -34,6 +38,7 @@ void Freezer::ProcessBlock(rtff::AudioBuffer* buffer) {
 
   // process temp buffer
   rtff::AbstractFilter::ProcessBlock(processing_buffer_.get());
+  ApplyGain(gain_, processing_buffer_.get());
 
   // add the temp buffer output to original buffer
   for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
@@ -43,6 +48,16 @@ void Freezer::ProcessBlock(rtff::AudioBuffer* buffer) {
     Eigen::Map<Eigen::VectorXf> original_data(buffer->data(channel_idx),
                                               buffer->frame_count());
     original_data += processed_data;
+  }
+
+  ApplyGain(dry_gain_, buffer);
+}
+
+void Freezer::ApplyGain(float gain, rtff::AudioBuffer* buffer) {
+  for (auto channel_idx = 0; channel_idx < channel_count(); channel_idx++) {
+    Eigen::Map<Eigen::VectorXf> data(buffer->data(channel_idx),
+                                     buffer->frame_count());
+    data.array() *= gain;
   }
 }
 
@@ -105,3 +120,18 @@ void Freezer::ProcessTransformedBlock(std::vector<std::complex<float>*> data,
 
   impl_->previous_fourier_transform.noalias() = impl_->fourier_transform;
 }
+
+void Freezer::set_gain(float gain) { gain_ = std::pow(10, gain / 20.0); }
+float Freezer::gain() const { return 20.0 * std::log10(gain_); }
+void Freezer::set_dry_gain(float gain) {
+  dry_gain_ = std::pow(10, gain / 20.0);
+}
+float Freezer::dry_gain() const { return 20.0 * std::log10(dry_gain_); }
+void Freezer::set_fade_in_duration(uint32_t sample_count) {
+  fade_in_duration_ = sample_count;
+}
+uint32_t Freezer::fade_in_duration() const { return fade_in_duration_; }
+void Freezer::set_fade_out_duration(uint32_t sample_count) {
+  fade_out_duration_ = sample_count;
+}
+uint32_t Freezer::fade_out_duration() const { return fade_out_duration_; }
