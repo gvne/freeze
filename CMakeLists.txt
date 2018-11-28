@@ -18,8 +18,8 @@ ExternalProject_Add(external_rtff
     "-Drtff_use_mkl=OFF"  # force the use of fftw
     "-Drtff_fftw_use_wisdom=ON"  # use the fftw wisdom file
     "-DCMAKE_INSTALL_PREFIX=${rtff_install_dir}"
-    "-DCMAKE_CXX_FLAGS=-fPIC"
-    "-DCMAKE_C_FLAGS=-fPIC"
+    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"
 )
 link_directories(${rtff_install_dir}/lib)
 
@@ -37,6 +37,19 @@ ExternalProject_Add(external_eigen
 )
 set(eigen_include_dir ${eigen_install_dir})
 add_definitions("-DEIGEN_RUNTIME_NO_MALLOC")
+
+# lv2 plugin
+set(lv2_install_dir ${CMAKE_BINARY_DIR}/lv2-install)
+ExternalProject_Add(external_lv2
+  GIT_REPOSITORY https://github.com/drobilla/lv2.git
+  GIT_TAG v1.14.0
+  BUILD_IN_SOURCE ON
+  CONFIGURE_COMMAND ./waf configure --prefix=${lv2_install_dir}
+  BUILD_COMMAND ./waf
+  INSTALL_COMMAND DESTDIR=${lv2_install_dir}/lv2root ./waf install
+)
+# strange include dir... due to DESTDIR stuff
+set(lv2_include_dir ${lv2_install_dir}/lv2root/${lv2_install_dir}/include)
 
 # tests
 if (${freezer_enable_tests})

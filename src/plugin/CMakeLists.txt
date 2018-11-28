@@ -4,6 +4,9 @@ add_library(mrfreeze SHARED
 )
 # remove the lib prefix
 set_target_properties(mrfreeze PROPERTIES PREFIX "")
+add_dependencies(mrfreeze
+  external_lv2
+)
 
 target_link_libraries(mrfreeze
   freezer
@@ -16,6 +19,7 @@ target_link_libraries(mrfreeze
 target_include_directories(mrfreeze
   PRIVATE
     ${rtff_install_dir}/include
+    ${lv2_include_dir}
 )
 
 set_target_properties(mrfreeze
