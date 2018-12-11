@@ -10,29 +10,29 @@ option(freezer_enable_tests "Build Unit tests" ON)
 option(freezer_build_for_mod "Build for mod device" OFF)
 
 if (${freezer_build_for_mod})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic -msse -msse2 -mfpmath=sse")
+  set(extra_fftw_configure_flags --host=arm-linux-gnueabi)
 endif()
 
 # Audionamix - rtff
 set(rtff_install_dir ${CMAKE_BINARY_DIR}/rtff-install)
 ExternalProject_Add(external_rtff
   GIT_REPOSITORY "https://github.com/audionamix/rtff"
-  GIT_TAG "2e6e3981e5589a56dc9b937eef1a2dc1f49e980e"
+  GIT_TAG "316dd12647011251f8ae6857a759c7f0fefe465d"
   CMAKE_ARGS
     "-Drtff_enable_tests=OFF"  # disable tests
     "-Drtff_use_mkl=OFF"  # force the use of fftw
     "-Drtff_fftw_use_wisdom=ON"  # use the fftw wisdom file
+    "-Drtff_fftw_extra_configure_flags=${extra_fftw_configure_flags}"
     "-DCMAKE_INSTALL_PREFIX=${rtff_install_dir}"
     "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
-    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}"
 )
 link_directories(${rtff_install_dir}/lib)
 
 # Eigen
 set(eigen_install_dir ${CMAKE_BINARY_DIR}/eigen-install)
 ExternalProject_Add(external_eigen
-  HG_REPOSITORY "https://bitbucket.org/eigen/eigen/"
-  HG_TAG "3.3.4"
+  GIT_REPOSITORY "https://github.com/eigenteam/eigen-git-mirror.git"
+  GIT_TAG "3.3.6"
   SOURCE_DIR ${eigen_install_dir}
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
