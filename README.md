@@ -35,12 +35,7 @@ lv2file -m -i untitled.wav -o output.wav http://romain-hennequin.fr/plugins/mod-
 
 ## Build for Mod
 
-To cross compile
-
 ```bash
-docker run --rm dockcross/linux-armv7 > dockcross
-chmod +x dockcross
-./dockcross cmake -H. -Bbuild -GNinja -Dfreezer_build_for_mod=ON -DCMAKE_INSTALL_PREFIX=build/install
-./dockcross ninja -Cbuild
-./dockcross ninja -Cbuild install
+docker run --rm -it -v$(pwd):/code moddevices/mod-plugin-builder bash
+./build mrfreeze
 ```

@@ -7,11 +7,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-fPIC")
 
 option(freezer_enable_tests "Build Unit tests" ON)
-option(freezer_build_for_mod "Build for mod device" OFF)
-
-if (${freezer_build_for_mod})
-  set(extra_fftw_configure_flags --host=arm-linux-gnueabi)
-endif()
 
 # Audionamix - rtff
 set(rtff_install_dir ${CMAKE_BINARY_DIR}/rtff-install)
