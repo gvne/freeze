@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-fPIC")
 
 option(freezer_enable_tests "Build Unit tests" ON)
+option(freezer_build_for_mod "Build using the moddevices/mod-plugin-builder container" OFF)
 
 # Audionamix - rtff
 set(rtff_install_dir ${CMAKE_BINARY_DIR}/rtff-install)
@@ -39,17 +40,21 @@ set(eigen_include_dir ${eigen_install_dir})
 add_definitions("-DEIGEN_RUNTIME_NO_MALLOC")
 
 # lv2 plugin
-set(lv2_install_dir ${CMAKE_BINARY_DIR}/lv2-install)
-ExternalProject_Add(external_lv2
-  GIT_REPOSITORY https://github.com/drobilla/lv2.git
-  GIT_TAG v1.14.0
-  BUILD_IN_SOURCE ON
-  CONFIGURE_COMMAND ./waf configure --prefix=${lv2_install_dir}
-  BUILD_COMMAND ./waf
-  INSTALL_COMMAND DESTDIR=${lv2_install_dir}/lv2root ./waf install
-)
-# strange include dir... due to DESTDIR stuff
-set(lv2_include_dir ${lv2_install_dir}/lv2root/${lv2_install_dir}/include)
+if (NOT ${freezer_build_for_mod})
+  set(lv2_install_dir ${CMAKE_BINARY_DIR}/lv2-install)
+  ExternalProject_Add(external_lv2
+    GIT_REPOSITORY https://github.com/drobilla/lv2.git
+    GIT_TAG v1.14.0
+    BUILD_IN_SOURCE ON
+    CONFIGURE_COMMAND ./waf configure --prefix=${lv2_install_dir}
+    BUILD_COMMAND ./waf
+    INSTALL_COMMAND DESTDIR=${lv2_install_dir}/lv2root ./waf install
+  )
+  # strange include dir... due to DESTDIR stuff
+  set(lv2_include_dir ${lv2_install_dir}/lv2root/${lv2_install_dir}/include)
+else()
+
+endif()
 
 # tests
 if (${freezer_enable_tests})
