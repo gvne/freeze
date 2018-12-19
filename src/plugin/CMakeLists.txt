@@ -7,8 +7,9 @@ set_target_properties(mrfreeze PROPERTIES PREFIX "")
 
 target_link_libraries(mrfreeze
   freezer
-  optimized rtff
-  debug rtffd
+  optimized ${rtff_install_dir}/lib/librtff.a
+  debug ${rtff_install_dir}/lib/librtffd.a
+  fftw3f
   pthread
 )
 
@@ -23,13 +24,8 @@ if (${freezer_build_for_mod})
     PROPERTIES
       COMPILE_FLAGS -O3 -ffast-math -Wall -fPIC -DPIC $(shell pkg-config --cflags fftw3f) -mtune=generic -msse -msse2 -mfpmath=sse
   )
-  set_target_properties(mrfreeze
-    PROPERTIES
-      LINK_FLAGS -shared $(shell pkg-config --libs fftw3f)
-  )
 else()
   add_dependencies(mrfreeze external_lv2)
-  target_link_libraries(mrfreeze fftw3f)
 endif()
 
 # install stage: create the lv2 plugin structure

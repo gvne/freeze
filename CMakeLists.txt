@@ -22,7 +22,9 @@ ExternalProject_Add(external_rtff
     "-DCMAKE_INSTALL_PREFIX=${rtff_install_dir}"
     "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
 )
-link_directories(${rtff_install_dir}/lib)
+if (NOT ${freezer_build_for_mod})
+  link_directories(${rtff_install_dir}/lib)
+endif()
 
 # Eigen
 set(eigen_install_dir ${CMAKE_BINARY_DIR}/eigen-install)

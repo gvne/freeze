@@ -15,8 +15,8 @@ target_include_directories(freezer
     ${eigen_install_dir}
 )
 target_link_libraries(freezer
-  optimized rtff
-  debug rtffd
+  optimized ${rtff_install_dir}/lib/librtff.a
+  debug ${rtff_install_dir}/lib/librtffd.a
   fftw3f
   pthread
 )
