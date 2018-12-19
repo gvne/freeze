@@ -19,12 +19,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/lib/lv2/ ..
 make
 ```
 
-Or using the `Makefile`
-```bash
-make
-make install
-```
-
 ## Execute
 
 To test the execution, we use the `lv2file` project
