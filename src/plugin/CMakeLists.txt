@@ -22,7 +22,7 @@ target_include_directories(mrfreeze
 if (${freezer_build_for_mod})
   set_target_properties(mrfreeze
     PROPERTIES
-      COMPILE_FLAGS -O3 -ffast-math -Wall -fPIC -DPIC $(shell pkg-config --cflags fftw3f) -mtune=generic -msse -msse2 -mfpmath=sse
+      COMPILE_FLAGS -O3 -ffast-math -Wall -fPIC -DPIC -mtune=generic -msse -msse2 -mfpmath=sse
   )
 else()
   add_dependencies(mrfreeze external_lv2)
