@@ -57,7 +57,7 @@ void Plugin::cleanup(LV2_Handle instance) {
 const void* Plugin::extension_data(const char* uri) { return nullptr; }
 
 // Plugin specific code
-Plugin::Plugin() : filter_(std::make_shared<Freezer>()) {
+Plugin::Plugin() /*: filter_(std::make_shared<Freezer>())*/ {
   // std::error_code err;
   // filter_->Init(channel_count(), err);
   // TODO: check for error...
