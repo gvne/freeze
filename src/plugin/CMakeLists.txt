@@ -6,10 +6,10 @@ add_library(mrfreeze SHARED
 set_target_properties(mrfreeze PROPERTIES PREFIX "")
 
 target_link_libraries(mrfreeze
-  freezer
-  optimized ${rtff_install_dir}/lib/librtff.a
-  debug ${rtff_install_dir}/lib/librtffd.a
-  fftw3f
+  # freezer
+  # optimized ${rtff_install_dir}/lib/librtff.a
+  # debug ${rtff_install_dir}/lib/librtffd.a
+  # fftw3f
   pthread
 )
 
