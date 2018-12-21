@@ -50,7 +50,7 @@ class Plugin {
   void UpdateParameters();
   void UpdateBuffers(uint32_t block_size);
   void ProcessBlock(uint32_t block_size);
-  std::shared_ptr<rtff::Filter> filter_;
+  // std::shared_ptr<rtff::Filter> filter_;
   // std::shared_ptr<Freezer> filter_;
   std::shared_ptr<rtff::AudioBuffer> buffer_;
 };
