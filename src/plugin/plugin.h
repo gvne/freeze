@@ -23,7 +23,11 @@ enum {
 };
 
 // class Freezer;
-// namespace rtff { class AudioBuffer; }
+namespace rtff {
+class AudioBuffer;
+class Filter;
+}  // namespace rtff
+
 class Plugin {
  public:
   // LV2 Plugin interface
@@ -46,9 +50,9 @@ class Plugin {
   void UpdateParameters();
   void UpdateBuffers(uint32_t block_size);
   void ProcessBlock(uint32_t block_size);
-
+  std::shared_ptr<rtff::Filter> filter_;
   // std::shared_ptr<Freezer> filter_;
-  // std::shared_ptr<rtff::AudioBuffer> buffer_;
+  std::shared_ptr<rtff::AudioBuffer> buffer_;
 };
 
 #endif  // FREEZE_SRC_PLUGIN_PLUGIN_H_

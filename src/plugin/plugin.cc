@@ -6,7 +6,8 @@
 
 
 // #include "freezer/freezer.h"
-// #include "rtff/buffer/audio_buffer.h"
+#include "rtff/buffer/audio_buffer.h"
+#include "rtff/filter.h"
 
 // LV2 Plugin Interface
 static const LV2_Descriptor descriptor = {
@@ -57,21 +58,21 @@ void Plugin::cleanup(LV2_Handle instance) {
 const void* Plugin::extension_data(const char* uri) { return nullptr; }
 
 // Plugin specific code
-Plugin::Plugin() /*: filter_(std::make_shared<Freezer>())*/ {
-  // std::error_code err;
-  // filter_->Init(channel_count(), err);
+Plugin::Plugin() : filter_(std::make_shared<rtff::Filter>()) {
+  std::error_code err;
+  filter_->Init(channel_count(), err);
   // TODO: check for error...
 }
 
 void Plugin::UpdateBuffers(uint32_t block_size) {
   // TODO: initialize the block size at instanciation to avoid allocating
   // memory at runtime
-  // if (filter_->block_size() != block_size) {
-  //   filter_->set_block_size(block_size);
-  // }
-  // if (!buffer_ || buffer_->frame_count() != block_size) {
-  //   buffer_ = std::make_shared<rtff::AudioBuffer>(block_size, channel_count());
-  // }
+  if (filter_->block_size() != block_size) {
+    filter_->set_block_size(block_size);
+  }
+  if (!buffer_ || buffer_->frame_count() != block_size) {
+    buffer_ = std::make_shared<rtff::AudioBuffer>(block_size, channel_count());
+  }
 }
 
 void Plugin::UpdateParameters() {
@@ -94,23 +95,23 @@ void Plugin::UpdateParameters() {
 
 void Plugin::ProcessBlock(uint32_t block_size) {
   // Run the process
-  // auto buffer_ptr = buffer_->data(0);
-  //
-  // // copy input in buffer
-  // auto in = ports[IN];
-  // std::copy(in, in + block_size, buffer_ptr);
-  //
-  // // process buffer
-  // filter_->ProcessBlock(buffer_.get());
-  //
-  // // copy buffer to output
-  // auto out = ports[OUT];
-  // std::copy(buffer_ptr, buffer_ptr + block_size, out);
+  auto buffer_ptr = buffer_->data(0);
+
+  // copy input in buffer
+  auto in = ports[IN];
+  std::copy(in, in + block_size, buffer_ptr);
+
+  // process buffer
+  filter_->ProcessBlock(buffer_.get());
+
+  // copy buffer to output
+  auto out = ports[OUT];
+  std::copy(buffer_ptr, buffer_ptr + block_size, out);
 
   // jus copy input data to output
-  auto in = ports[IN];
-  auto out = ports[OUT];
-  std::copy(in, in + block_size, out);
+  // auto in = ports[IN];
+  // auto out = ports[OUT];
+  // std::copy(in, in + block_size, out);
 }
 
 uint8_t Plugin::channel_count() const {
